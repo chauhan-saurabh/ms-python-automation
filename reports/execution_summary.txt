@@ -1,0 +1,34 @@
+
+
+========================================
+M&S INDIA AUTOMATION EXECUTION SUMMARY
+========================================
+
+Execution Date:
+2026-05-08 00:27:30.683572
+
+Automation Scope:
+- Homepage Validation
+- Product Search
+- PDP Validation
+- Size Selection
+- Type/Fit Selection
+- Add To Cart
+- Cart Validation
+- Checkout Flow
+- Login Validation
+
+Framework:
+- Python
+- Pytest
+- Playwright
+
+Browser:
+- Chromium
+
+Artifacts Generated:
+- HTML Report
+- Failure Screenshots
+- Execution Logs
+
+========================================
