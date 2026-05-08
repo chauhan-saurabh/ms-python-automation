@@ -1,0 +1,107 @@
+# .github/workflows/test.yml
+
+name: M&S E2E Tests
+
+on:
+  schedule:
+    # Runs every hour at :00
+    - cron: "0 * * * *"
+
+  # Also lets you trigger it manually from GitHub UI
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to push report to gh-pages branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+
+      # ── 1. Checkout code ──────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ──────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # ── 3. Install dependencies ───────────────────────────────
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Install Playwright browsers ────────────────────────
+      - name: Install Playwright browsers
+        run: python -m playwright install chromium --with-deps
+
+      # ── 5. Run tests ──────────────────────────────────────────
+      - name: Run pytest
+        run: pytest
+        continue-on-error: true # always proceed to publish even if tests fail
+
+      # ── 6. Add index + timestamp to report ────────────────────
+      - name: Stamp report with run info
+        run: |
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          TIMESTAMP=$(date -u "+%d %b %Y %H:%M UTC")
+          REPORT_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/report.html"
+
+          # Inject a small footer into the report
+          sed -i "s|</body>|<div style='font-family:sans-serif;font-size:0.8rem;color:#888;padding:16px;text-align:center'>Run at ${TIMESTAMP} · <a href='${RUN_URL}'>GitHub Actions log</a></div></body>|" reports/report.html
+
+          # Write a redirect index.html so the Pages root goes straight to the report
+          cat > reports/index.html <<HTML
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta http-equiv="refresh" content="0; url=report.html" />
+              <title>Redirecting…</title>
+            </head>
+            <body>
+              <p>Redirecting to <a href="report.html">latest report</a>…</p>
+            </body>
+          </html>
+          HTML
+
+      # ── 7. Publish report to GitHub Pages ─────────────────────
+      - name: Deploy report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports
+          publish_branch: gh-pages
+          force_orphan: true # keeps gh-pages branch clean (only latest report)
+          commit_message: "report: ${{ github.run_number }} — $(date -u '+%d %b %Y %H:%M UTC')"
+
+      # ── 8. Send email notification ────────────────────────────
+      - name: Send report email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: "M&S Automation <${{ secrets.MAIL_USERNAME }}>"
+          subject: "[${{ job.status == 'success' && '✅ PASSED' || '❌ FAILED' }}] M&S E2E
+            Report — Run #${{ github.run_number }}"
+          body: |
+            Hi,
+
+            Your scheduled M&S automation run #${{ github.run_number }} has completed.
+
+            📊 Live Report:
+            https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/report.html
+
+            🔍 Actions Log:
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            🕐 Run time: ${{ github.run_started_at }}
+
+            --
+            M&S Automation Bot

@@ -8,7 +8,9 @@ import subprocess
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 from pytest_html import extras as html_extras
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # -----------------------------------
 # DIRECTORIES

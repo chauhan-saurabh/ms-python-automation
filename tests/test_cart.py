@@ -1,4 +1,5 @@
 # tests/test_cart.py
+import os
 
 from playwright.sync_api import expect
 
@@ -92,8 +93,11 @@ def test_add_product_to_cart(page, steps):
     # LOGIN FLOW
     # -----------------------------------
 
+    mobile   = os.environ["MS_MOBILE"]
+    password = os.environ["MS_PASSWORD"]
+
     steps.add("Enter mobile number")
-    cart.enter_mobile_number("9997407473")
+    cart.enter_mobile_number(mobile)
 
     steps.add("Click Continue")
     cart.click_continue_after_mobile()
@@ -105,7 +109,7 @@ def test_add_product_to_cart(page, steps):
     expect(password_field).to_be_visible(timeout=20000)
 
     steps.add("Enter password")
-    cart.enter_password("Saw*9760320140")
+    cart.enter_password(password)
 
     steps.add("Click Login / Start Shopping")
     cart.click_login_button()
