@@ -8,9 +8,7 @@ import subprocess
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 from pytest_html import extras as html_extras
-from dotenv import load_dotenv
 
-load_dotenv()
 
 # -----------------------------------
 # DIRECTORIES
@@ -94,6 +92,9 @@ def page():
 
 def pytest_configure(config):
 
+    global _SESSION_START
+    _SESSION_START = datetime.now()
+
     config._metadata = getattr(config, "_metadata", {})
 
     config._metadata["Project"]     = "Marks & Spencer — E2E Automation"
@@ -102,7 +103,7 @@ def pytest_configure(config):
     config._metadata["Environment"] = "Production"
     config._metadata["Platform"]    = platform.platform()
     config._metadata["Python"]      = platform.python_version()
-    config._metadata["Run Date"]    = datetime.now().strftime("%d %b %Y  %H:%M:%S")
+    config._metadata["Started At"]  = _SESSION_START.strftime("%d %b %Y  %H:%M:%S")
 
     try:
         ver = subprocess.check_output(
@@ -128,7 +129,16 @@ def pytest_html_report_title(report):
 
 def pytest_html_results_summary(prefix, summary, postfix):
 
-    now = datetime.now().strftime("%d %b %Y, %H:%M:%S")
+    end_time  = datetime.now()
+    start_str = _SESSION_START.strftime("%d %b %Y  %H:%M:%S") if _SESSION_START else "—"
+    end_str   = end_time.strftime("%d %b %Y  %H:%M:%S")
+
+    if _SESSION_START:
+        elapsed     = end_time - _SESSION_START
+        total_secs  = int(elapsed.total_seconds())
+        duration_str = f"{total_secs // 60}m {total_secs % 60}s"
+    else:
+        duration_str = "—"
 
     html = f"""
     <style>{_custom_css()}</style>
@@ -142,7 +152,11 @@ def pytest_html_results_summary(prefix, summary, postfix):
         </div>
         <div class="ms-banner-right">
             <span class="ms-tag">Production</span>
-            <span class="ms-run-time">🕐 {now}</span>
+            <div class="ms-time-block">
+                <div class="ms-time-row">🟢 Started &nbsp;<strong>{start_str}</strong></div>
+                <div class="ms-time-row">🔴 Finished&nbsp;<strong>{end_str}</strong></div>
+                <div class="ms-time-row">⏱ Duration&nbsp;<strong>{duration_str}</strong></div>
+            </div>
         </div>
     </div>
     """
@@ -371,6 +385,9 @@ def _custom_css() -> str:
         font-size: 0.78rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
     }
     .ms-run-time { font-size: 0.85rem; opacity: 0.85; }
+    .ms-time-block { display: flex; flex-direction: column; gap: 4px; text-align: right; }
+    .ms-time-row { font-size: 0.82rem; opacity: 0.9; white-space: nowrap; }
+    .ms-time-row strong { font-weight: 700; }
 
     .ms-card {
         background: #fff; border-left: 5px solid #3498db; border-radius: 8px;
