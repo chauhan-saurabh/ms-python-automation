@@ -91,7 +91,7 @@ jobs:
 
       # ── 9. Send Gmail notification ────────────────────────────
       - name: Send report email
-        if: always()
+        if: steps.pytest.outcome == 'failure' || steps.pytest.outcome == 'cancelled'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
