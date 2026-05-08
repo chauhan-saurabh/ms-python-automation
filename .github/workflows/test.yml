@@ -20,9 +20,11 @@ jobs:
 
     steps:
 
-      # ── 1. Checkout code ──────────────────────────────────────
+      # ── 1. Checkout master branch ─────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: master
 
       # ── 2. Set up Python ──────────────────────────────────────
       - name: Set up Python
@@ -53,7 +55,7 @@ jobs:
       # ── 7. Stamp report + create index redirect ───────────────
       - name: Stamp report with run info
         run: |
-          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          RUN_URL="https://github.com/chauhan-saurabh/ms-python-automation/actions/runs/${{ github.run_id }}"
           TIMESTAMP=$(date -u "+%d %b %Y %H:%M UTC")
 
           if [ -f reports/report.html ]; then
@@ -62,12 +64,13 @@ jobs:
             echo "<html><body><h2>No report generated — check the Actions log.</h2><p><a href='${RUN_URL}'>View run</a></p></body></html>" > reports/report.html
           fi
 
+          # Root index.html redirects straight to the report
           cat > reports/index.html << 'HTML'
           <!DOCTYPE html>
           <html>
             <head>
               <meta http-equiv="refresh" content="0; url=report.html" />
-              <title>Redirecting…</title>
+              <title>M&S Automation Report</title>
             </head>
             <body>
               <p>Redirecting to <a href="report.html">latest report</a>…</p>
@@ -82,7 +85,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./reports
           publish_branch: gh-pages
-          force_orphan: true
+          user_name: "github-actions[bot]"
+          user_email: "github-actions[bot]@users.noreply.github.com"
           commit_message: "report: run #${{ github.run_number }}"
 
       # ── 9. Send Gmail notification ────────────────────────────
@@ -106,10 +110,10 @@ jobs:
             Status: ${{ job.status }}
 
             📊 Live Report:
-            https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/report.html
+            https://chauhan-saurabh.github.io/ms-python-automation/report.html
 
             🔍 Actions Log:
-            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            https://github.com/chauhan-saurabh/ms-python-automation/actions/runs/${{ github.run_id }}
 
             🕐 Run time: ${{ github.run_started_at }}
 
