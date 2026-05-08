@@ -2,3 +2,4 @@ playwright
 pytest
 pytest-html
 pytest-metadata
+python-dotenv
