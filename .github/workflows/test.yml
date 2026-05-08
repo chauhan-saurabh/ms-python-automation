@@ -40,6 +40,9 @@ jobs:
 
       # ── 5. Run tests ──────────────────────────────────────────
       - name: Run pytest
+        env:
+          MS_MOBILE: ${{ secrets.MS_MOBILE }}
+          MS_PASSWORD: ${{ secrets.MS_PASSWORD }}
         run: pytest
         continue-on-error: true # always proceed to publish even if tests fail
 
